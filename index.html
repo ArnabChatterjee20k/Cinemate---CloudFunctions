@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+  </head>
+  <body>
+    <input type="file" id="file-input" />
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const fileInput = document.getElementById("file-input");
+        const signedUrl =
+          "https://storage.googleapis.com/rn-socialmedia-382203.appspot.com/video.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=firebase-adminsdk-chm67%40rn-socialmedia-382203.iam.gserviceaccount.com%2F20230827%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20230827T151232Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=2b2b209ead3315d166fbf470e3f86bd6c62e273ae6f934ea1636750133b53287c598743cb440bf90553306838efe2e3747b347790c8133c9990e73198172b256d6489f1e21bda5a5ec2bba0c63957a96d121da84a25fb3e1cd87b9c1f7cf8326dc17c2490e98774308dc83e79e172beb7a9335e15de287214b0b26d84dcad4c35ace3bf0093abbe82324bd81c7a4a3d9f9504605bf082ca0652daffd9fce91148c320277ec9a4029a726f0c9475517fd1e717ecc74cbb9738bb13d8d8d40114fd3c664ade06d15e46d08369ea446134179d5f618c8cb674e87b1a4de9eabea89ea15dd59e55038b2a7445834854296e5f7fa3d4c28644850ca400f5139cdc2c8"; // Replace with your signed URL
+
+        fileInput.addEventListener("change", async (event) => {
+          const file = event.target.files[0];
+
+          if (file) {
+            let headersList = {
+              "Content-Type": "application/octet-stream",
+            };
+
+            let response = await fetch(
+              "https://storage.googleapis.com/rn-socialmedia-382203.appspot.com/video.mp4?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=firebase-adminsdk-chm67%40rn-socialmedia-382203.iam.gserviceaccount.com%2F20230827%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20230827T151826Z&X-Goog-Expires=900&X-Goog-SignedHeaders=content-type%3Bhost&X-Goog-Signature=3405d46f6af7244729aaae46af056b25c625a40ed16e75d2eaf721f218e6bb1a01cd3d8214917b61a4d3983b0fc8406cf673e184e8824e425f844f1f01873c669680777d0fea1d780ef8cb19d2b9805f5d03ba61904e0c3291f0bc16d5b4c7bf5ff4526f8636d21c6fc330c2cf2c697119d2f251b63c0cd0ff32c2304b703733528ee3135004538e4b962622b3fcc6abed1abb1bb609b84cc49b2221c3716038f6f1fb25c538cef499f85c11ce598ebd00be56720eeb5773de56c17e734d9e69281965777a34362ffe69bd3f9afd9975711fa8520ba4eda85cb141830c332bcd1df06684c56e5d38562cda6b94e86005d4f99a1c5b97f5143de8c55c4ca6add8",
+              {
+                method: "PUT",
+                headers: headersList,
+                body:file
+              }
+            );
+
+            let data = await response.text();
+            console.log(data);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
