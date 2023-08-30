@@ -1,9 +1,9 @@
 const os = require("os");
 const path = require("path");
 
-function getOutputLocation() {
+function getOutputLocation(output) {
   const tmp = os.tmpdir();
-  const location = path.join(tmp, "output.mp4");
+  const location = path.join(tmp,output);
   return location;
 }
 
