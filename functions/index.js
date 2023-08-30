@@ -24,6 +24,7 @@ const path = require("path");
 
 const app = initializeApp();
 const processVideo = require("./utils/processVideo.js");
+const uploadChunks = require("./utils/uploadChunks.js");
 
 exports.exportVideo = onObjectFinalized({ cpu: 2 }, async (event) => {
   const fileBucket = event.data.bucket;
@@ -35,7 +36,7 @@ exports.exportVideo = onObjectFinalized({ cpu: 2 }, async (event) => {
     return logger.error("Not a video");
   }
 
-  if (fileName.startsWith("100k/")) {
+  if (fileName.startsWith("100k/") || fileName.startsWith("800k/")) {
     logger.warn("Videos are written in 100k");
   }
 
@@ -45,6 +46,7 @@ exports.exportVideo = onObjectFinalized({ cpu: 2 }, async (event) => {
     const url = await getDownloadURL(fileRef);
     const videdata = await processVideo(url);
     logger.log("Videodata", videdata);
+    uploadChunks();
   } catch (error) {
     logger.error("Error", error);
   }
