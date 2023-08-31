@@ -17,7 +17,7 @@ async function processVideo(videoURL) {
   );
 
   const files =  await Promise.all(videoProcessPromises);
-  await generateMasterManifest()
+  generateMasterManifest()
   return files
 }
 
@@ -57,7 +57,8 @@ async function generateMasterManifest() {
   const header = "#EXTM3U";
   const manifestContent = bitrates
     .map((bitrate) => {
-      return `#EXT-X-STREAM-INF:BANDWIDTH=${bitrate},RESOLUTION=720X480\n${mediaManifestMap[bitrate]}`;
+      const manifestFileUrl = getStorage().bucket().file(mediaManifestMap[bitrate]).publicUrl()
+      return `#EXT-X-STREAM-INF:BANDWIDTH=${bitrate},RESOLUTION=720X480\n${manifestFileUrl}`;
     })
     .join("\n");
 
