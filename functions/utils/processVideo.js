@@ -15,10 +15,10 @@ async function processVideo(videoURL) {
 }
 
 function optimiseVideo(videoURL, bitrate) {
-  try {
+  return new Promise((resolve, reject) => {
     const outputFileName = Date.now();
     const outputDir = getOutputLocation(bitrate);
-    createNewDir(outputDir)
+    createNewDir(outputDir);
     const outputVideo = `${outputDir}/${outputFileName}.m3u8`;
     ffmpeg(videoURL)
       .outputOptions([
@@ -33,12 +33,17 @@ function optimiseVideo(videoURL, bitrate) {
       .videoBitrate(bitrate)
       .audioCodec("aac")
       .audioBitrate("128k")
+      .on("end", (e) => {
+        logger.log("Processing Ended");
+        resolve(outputVideo)
+      })
+      .on("error",(e)=>{
+        logger.error(e)
+        reject(e)
+      })
       .run();
+  });
 
-    return outputVideo;
-  } catch (error) {
-    logger.error({videoURL,bitrate});
-  }
 }
 
 module.exports = processVideo;

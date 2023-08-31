@@ -25,31 +25,35 @@ const path = require("path");
 const app = initializeApp();
 const processVideo = require("./utils/processVideo.js");
 const uploadChunks = require("./utils/uploadChunks.js");
+const deleteDir = require("./utils/deleteDir.js");
 
-exports.exportVideo = onObjectFinalized({ cpu: 2 }, async (event) => {
+exports.exportVideo = onObjectFinalized({ cpu: 2,timeoutSeconds:6000 }, async (event) => {
   const fileBucket = event.data.bucket;
   const filePath = event.data.name;
   const contentType = event.data.contentType;
   const fileName = path.basename(filePath);
 
-  if (!contentType.startsWith("video/")) {
-    return logger.error("Not a video");
-  }
+  const allowedFolderNames = ["100k","800k"]
+  const folderName = filePath.split('/')[0];
+  const isAllowedFolder = allowedFolderNames.includes(folderName);
 
-  if (fileName.startsWith("100k/") || fileName.startsWith("800k/")) {
-    logger.warn("Videos are written in 100k");
+  if(isAllowedFolder){
+    return logger.warn("IN folder")
   }
 
   // optimise the video
   try {
+    logger.log("Main Process")
     const fileRef = getStorage().bucket(fileBucket).file(filePath);
     const url = await getDownloadURL(fileRef);
-    const videdata = await processVideo(url);
-    logger.log("Videodata", videdata);
-    uploadChunks();
+    await processVideo(url);
+    await getStorage().bucket().file(filePath).delete()
+    logger.log("Main Process Over")
+    await uploadChunks();
+
   } catch (error) {
     logger.error("Error", error);
   }
-
+  
   return;
 });
