@@ -1,25 +1,33 @@
+const os = require("os");
+const fs = require("fs/promises");
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath(ffmpegPath);
 const getOutputLocation = require("./getOutpuLocation");
 const { logger } = require("firebase-functions/v1");
 const createNewDir = require("./createNewDir");
+const { getStorage } = require("firebase-admin/storage");
+
+const bitrates = ["100k", "800k"];
+const mediaManifestMap = {}; // bitrate => outputfileLocation
 
 async function processVideo(videoURL) {
-  const bitrates = ["100k", "800k"];
   const videoProcessPromises = bitrates.map((bitrate) =>
     optimiseVideo(videoURL, bitrate)
   );
 
-  return await Promise.all(videoProcessPromises);
+  const files =  await Promise.all(videoProcessPromises);
+  await generateMasterManifest()
+  return files
 }
 
 function optimiseVideo(videoURL, bitrate) {
+  const outputFileName = Date.now();
+  const outputDir = getOutputLocation(bitrate);
+  const outputVideo = `${outputDir}/${outputFileName}.m3u8`;
+  mediaManifestMap[bitrate] = `${bitrate}/${outputFileName}.m3u8`;
   return new Promise((resolve, reject) => {
-    const outputFileName = Date.now();
-    const outputDir = getOutputLocation(bitrate);
     createNewDir(outputDir);
-    const outputVideo = `${outputDir}/${outputFileName}.m3u8`;
     ffmpeg(videoURL)
       .outputOptions([
         "-profile:v baseline", // H.264 profile for wider devide suppoet
@@ -35,15 +43,37 @@ function optimiseVideo(videoURL, bitrate) {
       .audioBitrate("128k")
       .on("end", (e) => {
         logger.log("Processing Ended");
-        resolve(outputVideo)
+        resolve(outputVideo);
       })
-      .on("error",(e)=>{
-        logger.error(e)
-        reject(e)
+      .on("error", (e) => {
+        logger.error(e);
+        reject(e);
       })
       .run();
   });
-
 }
 
+async function generateMasterManifest() {
+  const header = "#EXTM3U";
+  const manifestContent = bitrates
+    .map((bitrate) => {
+      return `#EXT-X-STREAM-INF:BANDWIDTH=${bitrate},RESOLUTION=720X480\n${mediaManifestMap[bitrate]}`;
+    })
+    .join("\n");
+
+  const location = os.tmpdir();
+  const name = `${Date.now()}.m3u8`;
+  const fileTempLocation = `/${location}/${name}`;
+
+  await fs.writeFile(
+    fileTempLocation,
+    `${header}
+    ${manifestContent}
+  `
+  );
+
+  await getStorage().bucket().upload(fileTempLocation, {
+    destination: name,
+  });
+}
 module.exports = processVideo;
