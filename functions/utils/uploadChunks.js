@@ -11,7 +11,7 @@ async function uploadChunks() {
     const videoDir = getOutputLocation(bitrate);
     const files = await readDir(videoDir);
     await Promise.allSettled(
-      files.map((file) => upload(path.join(videoDir, file), bitrate))
+      files.map((file) => upload(path.join(videoDir, file)))
     );
   }
 }
@@ -19,9 +19,7 @@ async function uploadChunks() {
 async function upload(fileLocation, folder) {
   await getStorage()
     .bucket()
-    .upload(fileLocation, {
-      destination: path.join(folder, path.basename(fileLocation)),
-    });
+    .upload(fileLocation);
 }
 
 uploadChunks().catch((error) => {

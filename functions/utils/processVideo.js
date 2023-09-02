@@ -24,8 +24,9 @@ async function processVideo(videoURL) {
 function optimiseVideo(videoURL, bitrate) {
   const outputFileName = Date.now();
   const outputDir = getOutputLocation(bitrate);
+  logger.warn(outputDir)
   const outputVideo = `${outputDir}/${outputFileName}.m3u8`;
-  mediaManifestMap[bitrate] = `${bitrate}/${outputFileName}.m3u8`;
+  mediaManifestMap[bitrate] = `${outputFileName}.m3u8`;
   return new Promise((resolve, reject) => {
     createNewDir(outputDir);
     ffmpeg(videoURL)
@@ -74,7 +75,7 @@ async function generateMasterManifest() {
   );
 
   await getStorage().bucket().upload(fileTempLocation, {
-    destination: name,
+    destination: `master-manifest-${name}`,
   });
 }
 module.exports = processVideo;

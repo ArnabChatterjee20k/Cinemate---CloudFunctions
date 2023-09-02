@@ -26,6 +26,8 @@ const app = initializeApp();
 const processVideo = require("./utils/processVideo.js");
 const uploadChunks = require("./utils/uploadChunks.js");
 const deleteDir = require("./utils/deleteDir.js");
+const { isEncodedVideo , isVideo } = require("./utils/validator.js");
+
 
 exports.exportVideo = onObjectFinalized({ cpu: 2,timeoutSeconds:6000 }, async (event) => {
   const fileBucket = event.data.bucket;
@@ -33,23 +35,18 @@ exports.exportVideo = onObjectFinalized({ cpu: 2,timeoutSeconds:6000 }, async (e
   const contentType = event.data.contentType;
   const fileName = path.basename(filePath);
 
-  const allowedFolderNames = ["100k","800k"]
-  const folderName = filePath.split('/')[0];
-  const isAllowedFolder = allowedFolderNames.includes(folderName);
-
-  if(isAllowedFolder){
-    return logger.warn("IN folder")
+  if(isEncodedVideo(fileName) || !isVideo(fileName)){
+    return logger.warn("Not a video "+fileName)
   }
-
   // optimise the video
   try {
     logger.log("Main Process")
     const fileRef = getStorage().bucket(fileBucket).file(filePath);
     const url = await getDownloadURL(fileRef);
     await processVideo(url);
+    await uploadChunks();
     await getStorage().bucket().file(filePath).delete()
     logger.log("Main Process Over")
-    await uploadChunks();
 
   } catch (error) {
     logger.error("Error", error);
